@@ -1,6 +1,9 @@
 use rand;
 use rand::distributions::{IndependentSample, Range};
 
+use rayon::prelude::*;
+
+
 #[derive(Debug, Clone)]
 pub struct NQueens {
     queens: Vec<Option<usize>>,
@@ -95,22 +98,26 @@ impl NQueens {
     pub fn is_valid(&self) -> bool {
         // Check if all entries are not None; this lets us use unwrap everywhere and provides a
         // quick exit.
-        for q in &self.queens {
-            if q.is_none() { return false; }
+        let full_board = self.queens.par_iter()
+                             .all(|q| !q.is_none());
+        if !full_board {
+            return false;
         }
 
         // do not need to check columns because by definition of our struct we only have one queen
         // per column
 
         // check rows
-        for (i, q) in self.queens.iter().enumerate() {
+        let all_rows_distinct = self.queens.par_iter().enumerate().all( |(i,q)| {
             let q = q.unwrap();
-            for q2 in &self.queens[i+1..] {
+            self.queens[i+1..].par_iter().all( |q2| {
                 let q2 = q2.unwrap();
-                if q == q2 {
-                    return false;
-                }
-            }
+                q != q2
+            })
+        } );
+
+        if !all_rows_distinct {
+            return false;
         }
 
         // check diagonals
@@ -119,25 +126,24 @@ impl NQueens {
         // falling diagonal are the same in a subtraction table. Additionally, they are symmetric
         // (up to sign, see below) so we only have to do the computations for (i,j) pairs and not
         // (j,i) as well.
-        for (i, q) in self.queens.iter().enumerate() {
+        let all_diagonals_distinct = self.queens.par_iter().enumerate().all( |(i, q)| {
             let q = q.unwrap();
-            // optimization so we don't compare (i,j) and (j,i)
-            for (j, q2) in (&self.queens[i+1..]).iter().enumerate() {
+            // optimization so we don't compare (i,j) and (j,i) as noted above
+            self.queens[i+1..].par_iter().enumerate().all( |(j, q2)| {
                 let q2 = q2.unwrap();
-                // we need to add i+1 to account for the shifting that we did in the second
-                // enumeration
-                if i+q == i+1+j+q2 {
-                    return false;
-                }
-
+                // The i+1 term appears to account for the shifting that we did in the second
+                // enumeration.
+                
                 // This should be correct for all useful inputs. We don't actually need the signed
                 // answer; we just don't want them to be equal. If the numbers are too large we may
                 // be incorrect (i.e. if things are around USIZE_MAX, USIZE_MAX/2 etc.) but that
                 // would be way too many queens.
-                if i.wrapping_sub(q) == (i+1+j).wrapping_sub(q2) {
-                    return false;
-                }
-            }
+                (i+q != i+1+j+q2) && (i.wrapping_sub(q) != (i+1+j).wrapping_sub(q2))
+            })
+        });
+
+        if !all_diagonals_distinct {
+            return false;
         }
 
         // if above checks pass, this is a valid solution and we return true
