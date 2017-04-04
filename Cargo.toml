@@ -1,0 +1,8 @@
+[package]
+name = "nqueens-various"
+version = "0.1.0"
+authors = ["Harry Stern <hcs@meow.sh>"]
+
+[dependencies]
+rand = "0.3"
+rayon = "0.6"
