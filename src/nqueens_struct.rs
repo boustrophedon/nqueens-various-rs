@@ -1,3 +1,6 @@
+use std::iter::IntoIterator;
+use std::slice::{Iter, IterMut};
+
 use rand;
 use rand::distributions::{IndependentSample, Range};
 
@@ -62,11 +65,18 @@ impl NQueens {
     }
 
 
-    /// Returns an Option contains the position of the queen in the given column
+    /// Returns an Option containing the position of the queen in the given column
     pub fn get_option(&self, column: usize) -> Option<usize> {
         assert!(column < self.size());
         self.queens[column]
     }
+
+    /// Returns a reference to an Option containing the position of the queen in the given column
+    pub fn get_option_ref(&self, column: usize) -> &Option<usize> {
+        assert!(column < self.size());
+        &self.queens[column]
+    }
+
 
     /// Sets the queen in the given column to the value of `row`.
     pub fn set(&mut self, column: usize, row: usize) {
@@ -82,6 +92,16 @@ impl NQueens {
 
         let size = self.size();
         self.set(column, Range::new(0, size).ind_sample(&mut rng));
+    }
+
+    /// Returns an iterator over the columns of the board
+    pub fn iter(&self) -> Iter<Option<usize>> {
+        self.queens.iter()
+    }
+
+    /// Returns a mutable iterator over the columns of the board
+    pub fn iter_mut(&mut self) -> IterMut<Option<usize>> {
+        self.queens.iter_mut()
     }
 
     /// Creates a struct that implements `Iterator` which provides all possible successors of the
@@ -157,6 +177,26 @@ impl Index<usize> for NQueens {
 
     fn index(&self, column: usize) -> &usize {
         self.get_ref(column)
+    }
+}
+
+// no `impl IntoIter for NQueens` (i.e. without ref) because it seems useless
+
+impl<'board> IntoIterator for &'board NQueens {
+    type Item = &'board Option<usize>;
+    type IntoIter = Iter<'board, Option<usize>>;
+
+    fn into_iter(self) -> Iter<'board, Option<usize>> {
+        self.queens.iter()
+    }
+}
+
+impl<'board> IntoIterator for &'board mut NQueens {
+    type Item = &'board mut Option<usize>;
+    type IntoIter = IterMut<'board, Option<usize>>;
+
+    fn into_iter(self) -> IterMut<'board, Option<usize>> {
+        self.queens.iter_mut()
     }
 }
 
@@ -344,5 +384,76 @@ mod test {
                      // X Q X
         
         assert!(q.is_valid() == false);
+    }
+
+    #[test]
+    pub fn test_iter_empty() {
+        let q = NQueens::new_empty(0);
+        assert!(q.iter().next() == None);
+    }
+
+    #[test]
+    pub fn test_iter_1() {
+        let mut q = NQueens::new_empty(4);
+        q.set(0, 2);
+        q.set(1, 0);
+        q.set(2, 3);
+        q.set(3, 1);
+
+        let mut qiter = q.iter();
+        assert!(qiter.next() == Some(q.get_option_ref(0)));
+        assert!(qiter.next() == Some(q.get_option_ref(1)));
+        assert!(qiter.next() == Some(q.get_option_ref(2)));
+        assert!(qiter.next() == Some(q.get_option_ref(3)));
+        assert!(qiter.next() == None);
+
+        let mut qiter = q.iter();
+        assert!(qiter.next().unwrap().unwrap() == 2);
+        assert!(qiter.next().unwrap().unwrap() == 0);
+        assert!(qiter.next().unwrap().unwrap() == 3);
+        assert!(qiter.next().unwrap().unwrap() == 1);
+        assert!(qiter.next() == None);
+    }
+
+    #[test]
+    pub fn test_iter_mut_1() {
+        let mut b = NQueens::new_empty(4);
+
+        for (i, q) in b.iter_mut().enumerate() {
+            *q = Some(4-i);
+        }
+
+        assert!(b.get(0) == 4);
+        assert!(b.get(1) == 3);
+        assert!(b.get(2) == 2);
+        assert!(b.get(3) == 1);
+    }
+
+    #[test]
+    pub fn test_intoiter() {
+        let b = NQueens::new_random(4);
+
+        let mut i = 0;
+        for q in &b {
+            assert!(q.unwrap() == b.get(i));
+            i += 1;
+        }
+    }
+
+    #[test]
+    pub fn test_intoiter_mut() {
+        let mut b = NQueens::new_empty(4);
+
+        let mut i = 0;
+        for q in &mut b {
+            *q = Some(i);
+            i += 1
+        }
+
+        i = 0;
+        for q in &b {
+            assert!(q.unwrap() == b.get(i));
+            i += 1;
+        }
     }
 } 
