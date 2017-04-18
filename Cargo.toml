@@ -6,3 +6,4 @@ authors = ["Harry Stern <hcs@meow.sh>"]
 [dependencies]
 rand = "0.3"
 rayon = "0.6"
+permutohedron = "0.2"
