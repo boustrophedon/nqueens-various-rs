@@ -6,6 +6,7 @@ use rand::distributions::{IndependentSample, Range};
 
 use rayon::prelude::*;
 
+use super::NQueensSuccessorIter;
 
 #[derive(Debug, Clone)]
 pub struct NQueens {
@@ -78,12 +79,22 @@ impl NQueens {
     }
 
 
-    /// Sets the queen in the given column to the value of `row`.
+    /// Sets the queen in the given column to the value of `row` directly.
     pub fn set(&mut self, column: usize, row: usize) {
         assert!(column < self.size());
         assert!(row < self.size());
 
         self.queens[column] = Some(row);
+    }
+
+    /// Sets the queen in the given column to the value of `row` as an option.
+    pub fn set_option(&mut self, column: usize, row: Option<usize>) {
+        assert!(column < self.size());
+        if row.is_some() {
+            assert!(row.unwrap() < self.size());
+        }
+
+        self.queens[column] = row;
     }
 
     /// Sets the queen in the given column to a position selected uniformly at random
@@ -92,6 +103,13 @@ impl NQueens {
 
         let size = self.size();
         self.set(column, Range::new(0, size).ind_sample(&mut rng));
+    }
+
+    /// Removes the queen from the given column if there is one.
+    pub fn unset(&mut self, column: usize) {
+        assert!(column < self.size());
+
+        self.queens[column] = None;
     }
 
     /// Returns an iterator over the columns of the board
@@ -105,14 +123,15 @@ impl NQueens {
     }
 
     /// Creates a struct that implements `Iterator` which provides all possible successors of the
-    /// current board configuration. A successor is created by moving or placing a queen in a
-    /// single column.
+    /// current board configuration. A successor is created by moving a queen in a single column.
+    /// It does not place queens in columns that are empty.
     /// 
-    /// E.g. if all queens are filled on an 8 by 8 board, the iterator will return 56 boards,
-    /// while if no queens are filled the iterator will iterate over 64 boards.
-    //pub fn to_successors_iter(&self) -> NQueensSuccessorIter {
-    //    NQueensSuccessorIter::new(&self)
-    //}
+    /// E.g. if all columns are filled on an 8 by 8 board, the iterator will return 56 boards,
+    /// while if no columns are filled it will return 0 boards, and if one is filled it will return
+    /// 7.
+    pub fn successors_iter(&self) -> NQueensSuccessorIter {
+        NQueensSuccessorIter::new(&self)
+    }
 
     /// Checks if the current configuration of the board is a valid solution
     pub fn is_valid(&self) -> bool {
