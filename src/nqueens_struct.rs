@@ -199,6 +199,24 @@ impl Index<usize> for NQueens {
     }
 }
 
+/// Converts a slice of usize to an NQueens with the same number of elements as the slice, such
+/// that each column in order has a queen set in the given row. The trait documentation says it
+/// must not fail but since TryFrom isn't stabilized we still panic if one of the elements of the
+/// slice is larger than its length (i.e. it specifies a queen outside of the boundaries of the
+/// board).
+impl<T> From<T> for NQueens where T: AsRef<[usize]> {
+    fn from(slice: T) -> NQueens {
+        let slice = slice.as_ref();
+        let mut q = NQueens::new_empty(slice.len());
+        for (i,&e) in slice.iter().enumerate() {
+            assert!(e < slice.len());
+            q.set(i, e);
+        }
+
+        q
+    }
+}
+
 // no `impl IntoIter for NQueens` (i.e. without ref) because it seems useless
 
 impl<'board> IntoIterator for &'board NQueens {
@@ -474,5 +492,24 @@ mod test {
             assert!(q.unwrap() == b.get(i));
             i += 1;
         }
+    }
+
+    #[test]
+    pub fn test_from_impl_1() {
+        let v = vec![1,2,3,4,0];
+        let q = NQueens::from(v);
+
+        assert!(q.get(0) == 1);
+        assert!(q.get(1) == 2);
+        assert!(q.get(2) == 3);
+        assert!(q.get(3) == 4);
+        assert!(q.get(4) == 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "assertion failed: e < slice.len()")]
+    pub fn test_from_impl_fail() {
+        let v = vec![1,2,3,4,5];
+        let _ = NQueens::from(v);
     }
 } 
