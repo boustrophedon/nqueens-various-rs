@@ -153,7 +153,7 @@ impl NQueens {
                 let q2 = q2.unwrap();
                 q != q2
             })
-        } );
+        });
 
         if !all_rows_distinct {
             return false;
@@ -187,6 +187,71 @@ impl NQueens {
 
         // if above checks pass, this is a valid solution and we return true
         return true;
+    }
+
+    // This logic is basically entirely duplicated, but I don't think there's a good way to
+    // deduplicate them because of the short-circuiting we can do in the validity checks vs.
+    // counting conflicts
+
+    /// Counts the number of pairs of queens in conflict with each other, including queens passing
+    /// through other queens.
+    pub fn count_conflicts(&self) -> u32 {
+        // NOTE: the `|| 0u32` after the fold calls below is there because the ParallelIterator
+        // trait's fold takes an identity function rather than a value
+
+        // do not need to check columns because by definition of our struct we only have one queen
+        // per column
+
+        // check rows
+        let row_conflicts = self.queens.par_iter().enumerate().fold(|| 0u32, |sum, (i,q)| {
+            if q.is_none() { return sum; }
+            let q = q.unwrap();
+            let qconflicts = self.queens[i+1..].par_iter().fold(|| 0u32, |suminner, q2| {
+                if q2.is_none() { return suminner; }
+
+                let q2 = q2.unwrap();
+                if q != q2 { return suminner; }
+                else { return suminner+1; }
+            }).sum();
+            return qconflicts+sum;
+        }).sum();
+
+        // check diagonals
+        // This "row+column are all distinct" test works because if you imagine an addition table,
+        // all the elements on a rising diagonal are the same. Similarly, all the elements on a
+        // falling diagonal are the same in a subtraction table. Additionally, they are symmetric
+        // (up to sign, see below) so we only have to do the computations for (i,j) pairs and not
+        // (j,i) as well.
+        // Additionally, we don't undercount diagonals when checking both rising and falling
+        // diagonals in the same if statement because only one of the checks can fail at a time. If
+        // both failed that would mean we have a queen on a rising and falling diagonal equidistant
+        // from the queen we're checking, which would mean they are on the same column. We can
+        // only have one queen per column so this cannot happen.
+        let diagonal_conflicts = self.queens.par_iter().enumerate().fold(|| 0u32, |sum, (i, q)| {
+            if q.is_none() { return sum; }
+            let q = q.unwrap();
+            // optimization so we don't compare (i,j) and (j,i) as noted above
+            let qconflicts = self.queens[i+1..].par_iter().enumerate().fold(|| 0u32, |suminner, (j, q2)| {
+                if q2.is_none() { return suminner; }
+                let q2 = q2.unwrap();
+                // The i+1 term appears to account for the shifting that we did in the second
+                // enumeration.
+
+                // This should be correct for all useful inputs. We don't actually need the signed
+                // answer; we just don't want them to be equal. If the numbers are too large we may
+                // be incorrect (i.e. if things are around USIZE_MAX, USIZE_MAX/2 etc.) but that
+                // would be way too many queens.
+                if (i+q != i+1+j+q2) && (i.wrapping_sub(q) != (i+1+j).wrapping_sub(q2)) {
+                    return suminner;
+                }
+                else {
+                    return suminner+1;
+                }
+            }).sum();
+            return qconflicts+sum;
+        }).sum();
+
+        return row_conflicts+diagonal_conflicts;
     }
 }
 
@@ -253,6 +318,8 @@ mod test {
         // X Q X X
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
@@ -264,6 +331,8 @@ mod test {
         // X X Q X
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
@@ -276,6 +345,8 @@ mod test {
         // X X X X Q
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
@@ -288,6 +359,8 @@ mod test {
         // X Q X X X
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     // of course we have to test an actual 8 queens
@@ -304,6 +377,8 @@ mod test {
        // X X Q X X X X X
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     // and another nonsymmetric one
@@ -320,6 +395,8 @@ mod test {
         // Q X X X X X X X
 
         assert!(q.is_valid() == true);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
 
@@ -329,6 +406,8 @@ mod test {
         // Q Q
         // X X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -337,6 +416,8 @@ mod test {
         // X X
         // Q Q
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -346,6 +427,8 @@ mod test {
         // X X X
         // X Q X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -358,6 +441,22 @@ mod test {
         // X X X X X Q
         // X X X Q X X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 2, "{} != 2", count);
+    }
+
+    #[test]
+    pub fn test_horizontals_5() {
+        let mut q = NQueens::new_empty(6);
+        q.set(0, 0); // Q Q Q Q Q Q
+        q.set(1, 0); // X X X X X X
+        q.set(2, 0); // X X X X X X
+        q.set(3, 0); // X X X X X X
+        q.set(4, 0); // X X X X X X
+        q.set(5, 0); // X X X X X X
+        assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 5+4+3+2+1, "{} != 15", count);
     }
 
     #[test]
@@ -366,6 +465,8 @@ mod test {
         // Q X
         // X Q
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -374,6 +475,8 @@ mod test {
         // X Q
         // Q X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -383,6 +486,8 @@ mod test {
         // X X Q
         // X Q X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
     }
 
     #[test]
@@ -394,6 +499,8 @@ mod test {
         // X X X X Q
         // X X Q X X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 2, "{} != 2", count);
     }
 
     #[test]
@@ -405,12 +512,73 @@ mod test {
         // Q X X X X
         // X X Q X X
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 2, "{} != 2", count);
     }
 
+    #[test]
+    pub fn test_diagonals_6() {
+        let q = NQueens::from([0,1,2,3,4]);
+        // Q X X X X
+        // X Q X X X
+        // X X Q X X
+        // X X X Q X
+        // X X X X Q
+        assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 4+3+2+1, "{} != 10", count);
+    }
+
+    #[test]
+    pub fn test_diagonals_7() {
+        let q = NQueens::from([0,1,2,1,0]);
+        // Q X X X Q
+        // X Q X Q X
+        // X X Q X X
+        // X X X X X
+        // X X X X X
+        assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == (1+2)+(1+1)+(0+2)+(0+1), "{} != 8", count);
+    }
+
+    #[test]
+    pub fn test_diagonals_8() {
+        let q = NQueens::from([0,1,2,3,4,1,0,7]);
+        // Q X X X X X Q X
+        // X Q X X X Q X X
+        // X X Q X X X X X
+        // X X X Q X X X X
+        // X X X X Q X X X
+        // X X X X X X X X
+        // X X X X X X X X
+        // X X X X X X X Q
+
+        assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == (1+5)+(1+4)+(0+3)+(0+4)+(0+1)+(0+1)+(0+0)+(0+0), "{} != 20", count);
+    }
+
+    #[test]
+    pub fn test_conflicts_none_between() {
+        // Q X Q
+        // X X X
+        // X X X
+        let mut q = NQueens::from([0, 0, 0]);
+        q.unset(1);
+
+        assert!(q.is_valid() == false);
+
+        let count = q.count_conflicts();
+        assert!(count == 1, "{} != 1", count);
+
+    }
     #[test]
     pub fn test_none_1() {
         let q = NQueens::new_empty(3);
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
@@ -422,12 +590,16 @@ mod test {
         // X Q X
         
         assert!(q.is_valid() == false);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
     pub fn test_iter_empty() {
         let q = NQueens::new_empty(0);
         assert!(q.iter().next() == None);
+        let count = q.count_conflicts();
+        assert!(count == 0, "{} != 0", count);
     }
 
     #[test]
