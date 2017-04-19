@@ -351,12 +351,12 @@ mod test {
     #[test]
     pub fn test_horizontals_4() {
         let mut q = NQueens::new_empty(6);
-        q.set(0, 0); // X X Q X X X
-        q.set(1, 2); // Q X X X Q X
+        q.set(0, 1); // X X Q X X X
+        q.set(1, 3); // Q X X X Q X
         q.set(2, 0); // X X X X X X
-        q.set(3, 0); // X Q X X X X
-        q.set(4, 0); // X X X X X Q
-        q.set(5, 0); // X X X Q X X
+        q.set(3, 5); // X Q X X X X
+        q.set(4, 1); // X X X X X Q
+        q.set(5, 4); // X X X Q X X
         assert!(q.is_valid() == false);
     }
 
