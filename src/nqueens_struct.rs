@@ -354,9 +354,9 @@ mod test {
         q.set(0, 0); // X X Q X X X
         q.set(1, 2); // Q X X X Q X
         q.set(2, 0); // X X X X X X
-        q.set(2, 0); // X Q X X X X
-        q.set(2, 0); // X X X X X Q
-        q.set(2, 0); // X X X Q X X
+        q.set(3, 0); // X Q X X X X
+        q.set(4, 0); // X X X X X Q
+        q.set(5, 0); // X X X Q X X
         assert!(q.is_valid() == false);
     }
 
@@ -392,7 +392,7 @@ mod test {
         q.set(1, 0); // X X X Q X
         q.set(2, 4); // Q X X X X
         q.set(3, 1); // X X X X Q
-        q.set(3, 3); // X X Q X X
+        q.set(4, 3); // X X Q X X
         assert!(q.is_valid() == false);
     }
 
@@ -403,7 +403,7 @@ mod test {
         q.set(1, 1); // X Q X X X
         q.set(2, 4); // X X X X Q
         q.set(3, 0); // Q X X X X
-        q.set(3, 2); // X X Q X X
+        q.set(4, 2); // X X Q X X
         assert!(q.is_valid() == false);
     }
 
