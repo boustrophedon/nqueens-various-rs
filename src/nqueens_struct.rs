@@ -246,46 +246,46 @@ mod test {
 
     #[test]
     pub fn test_valid_1() {
-        let mut q = NQueens::new_empty(4);
-        q.set(0, 1); // X X Q X
-        q.set(1, 3); // Q X X X
-        q.set(2, 0); // X X X Q
-        q.set(3, 2); // X Q X X
+        let q = NQueens::from([1,3,0,2]);
+        // X X Q X
+        // Q X X X
+        // X X X Q
+        // X Q X X
 
         assert!(q.is_valid() == true);
     }
 
     #[test]
     pub fn test_valid_2() {
-        let mut q = NQueens::new_empty(4);
-        q.set(0, 2); // X Q X X
-        q.set(1, 0); // X X X Q
-        q.set(2, 3); // Q X X X
-        q.set(3, 1); // X X Q X
+        let q = NQueens::from([2,0,3,1]);
+        // X Q X X
+        // X X X Q
+        // Q X X X
+        // X X Q X
 
         assert!(q.is_valid() == true);
     }
 
     #[test]
     pub fn test_valid_3() {
-        let mut q = NQueens::new_empty(5);
-        q.set(0, 2); // X Q X X X
-        q.set(1, 0); // X X X Q X
-        q.set(2, 3); // Q X X X X
-        q.set(3, 1); // X X Q X X
-        q.set(4, 4); // X X X X Q
+        let q = NQueens::from([2,0,3,1,4]);
+        // X Q X X X
+        // X X X Q X
+        // Q X X X X
+        // X X Q X X
+        // X X X X Q
 
         assert!(q.is_valid() == true);
     }
 
     #[test]
     pub fn test_valid_4() {
-        let mut q = NQueens::new_empty(5);
-        q.set(0, 1); // X X X Q X
-        q.set(1, 4); // Q X X X X
-        q.set(2, 2); // X X Q X X
-        q.set(3, 0); // X X X X Q
-        q.set(4, 3); // X Q X X X
+        let q = NQueens::from([1,4,2,0,3]);
+        // X X X Q X
+        // Q X X X X
+        // X X Q X X
+        // X X X X Q
+        // X Q X X X
 
         assert!(q.is_valid() == true);
     }
@@ -293,15 +293,15 @@ mod test {
     // of course we have to test an actual 8 queens
     #[test]
     pub fn test_valid_5() {
-        let mut q = NQueens::new_empty(8);
-        q.set(0, 3); // X X X X X Q X X
-        q.set(1, 5); // X X X Q X X X X
-        q.set(2, 7); // X X X X X X Q X
-        q.set(3, 1); // Q X X X X X X X
-        q.set(4, 6); // X X X X X X X Q
-        q.set(5, 0); // X Q X X X X X X
-        q.set(6, 2); // X X X X Q X X X
-        q.set(7, 4); // X X Q X X X X X
+        let q = NQueens::from([3,5,7,1,6,0,2,4]);
+       // X X X X X Q X X
+       // X X X Q X X X X
+       // X X X X X X Q X
+       // Q X X X X X X X
+       // X X X X X X X Q
+       // X Q X X X X X X
+       // X X X X Q X X X
+       // X X Q X X X X X
 
         assert!(q.is_valid() == true);
     }
@@ -309,15 +309,15 @@ mod test {
     // and another nonsymmetric one
     #[test]
     pub fn test_valid_6() {
-        let mut q = NQueens::new_empty(8);
-        q.set(0, 7); // X X X X Q X X X
-        q.set(1, 1); // X Q X X X X X X
-        q.set(2, 4); // X X X Q X X X X
-        q.set(3, 2); // X X X X X X Q X
-        q.set(4, 0); // X X Q X X X X X
-        q.set(5, 6); // X X X X X X X Q
-        q.set(6, 3); // X X X X X Q X X
-        q.set(7, 5); // Q X X X X X X X
+        let q = NQueens::from([7,1,4,2,0,6,3,5]);
+        // X X X X Q X X X
+        // X Q X X X X X X
+        // X X X Q X X X X
+        // X X X X X X Q X
+        // X X Q X X X X X
+        // X X X X X X X Q
+        // X X X X X Q X X
+        // Q X X X X X X X
 
         assert!(q.is_valid() == true);
     }
@@ -325,85 +325,85 @@ mod test {
 
     #[test]
     pub fn test_horizontals_1() {
-        let mut q = NQueens::new_empty(2);
-        q.set(0, 0); // Q Q
-        q.set(1, 0); // X X
+        let q = NQueens::from([0,0]);
+        // Q Q
+        // X X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_horizontals_2() {
-        let mut q = NQueens::new_empty(2);
-        q.set(0, 0); // X X
-        q.set(1, 0); // Q Q
+        let q = NQueens::from([1,1]);
+        // X X
+        // Q Q
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_horizontals_3() {
-        let mut q = NQueens::new_empty(3);
-        q.set(0, 0); // Q X Q
-        q.set(1, 2); // X X X
-        q.set(2, 0); // X Q X
+        let q = NQueens::from([0,2,0]);
+        // Q X Q
+        // X X X
+        // X Q X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_horizontals_4() {
-        let mut q = NQueens::new_empty(6);
-        q.set(0, 1); // X X Q X X X
-        q.set(1, 3); // Q X X X Q X
-        q.set(2, 0); // X X X X X X
-        q.set(3, 5); // X Q X X X X
-        q.set(4, 1); // X X X X X Q
-        q.set(5, 4); // X X X Q X X
+        let q = NQueens::from([1,3,0,5,1,4]);
+        // X X Q X X X
+        // Q X X X Q X
+        // X X X X X X
+        // X Q X X X X
+        // X X X X X Q
+        // X X X Q X X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_diagonals_1() {
-        let mut q = NQueens::new_empty(2);
-        q.set(0, 0); // Q X
-        q.set(1, 1); // X Q
+        let q = NQueens::from([0,1]);
+        // Q X
+        // X Q
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_diagonals_2() {
-        let mut q = NQueens::new_empty(2);
-        q.set(0, 1); // X Q
-        q.set(1, 0); // Q X
+        let q = NQueens::from([1,0]);
+        // X Q
+        // Q X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_diagonals_3() {
-        let mut q = NQueens::new_empty(3);
-        q.set(0, 0); // Q X X
-        q.set(1, 2); // X X Q
-        q.set(2, 1); // X Q X
+        let q = NQueens::from([0,2,1]);
+        // Q X X
+        // X X Q
+        // X Q X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_diagonals_4() {
-        let mut q = NQueens::new_empty(5);
-        q.set(0, 2); // X Q X X X
-        q.set(1, 0); // X X X Q X
-        q.set(2, 4); // Q X X X X
-        q.set(3, 1); // X X X X Q
-        q.set(4, 3); // X X Q X X
+        let q = NQueens::from([2,0,4,1,3]);
+        // X Q X X X
+        // X X X Q X
+        // Q X X X X
+        // X X X X Q
+        // X X Q X X
         assert!(q.is_valid() == false);
     }
 
     #[test]
     pub fn test_diagonals_5() {
-        let mut q = NQueens::new_empty(5);
-        q.set(0, 3); // X X X Q X
-        q.set(1, 1); // X Q X X X
-        q.set(2, 4); // X X X X Q
-        q.set(3, 0); // Q X X X X
-        q.set(4, 2); // X X Q X X
+        let q = NQueens::from([3,1,4,0,2]);
+        // X X X Q X
+        // X Q X X X
+        // X X X X Q
+        // Q X X X X
+        // X X Q X X
         assert!(q.is_valid() == false);
     }
 
@@ -415,10 +415,11 @@ mod test {
 
     #[test]
     pub fn test_none_2() {
-        let mut q = NQueens::new_empty(3);
-        q.set(0, 0); // Q X X
-        q.set(1, 2); // X X X
-                     // X Q X
+        let mut q = NQueens::from([0,2,0]);
+        q.unset(2);
+        // Q X X
+        // X X X
+        // X Q X
         
         assert!(q.is_valid() == false);
     }
@@ -431,11 +432,7 @@ mod test {
 
     #[test]
     pub fn test_iter_1() {
-        let mut q = NQueens::new_empty(4);
-        q.set(0, 2);
-        q.set(1, 0);
-        q.set(2, 3);
-        q.set(3, 1);
+        let q = NQueens::from([2,0,3,1]);
 
         let mut qiter = q.iter();
         assert!(qiter.next() == Some(q.get_option_ref(0)));
@@ -492,18 +489,6 @@ mod test {
             assert!(q.unwrap() == b.get(i));
             i += 1;
         }
-    }
-
-    #[test]
-    pub fn test_from_impl_1() {
-        let v = vec![1,2,3,4,0];
-        let q = NQueens::from(v);
-
-        assert!(q.get(0) == 1);
-        assert!(q.get(1) == 2);
-        assert!(q.get(2) == 3);
-        assert!(q.get(3) == 4);
-        assert!(q.get(4) == 0);
     }
 
     #[test]
