@@ -2,6 +2,7 @@ use std::iter::IntoIterator;
 use std::slice::{Iter, IterMut};
 
 use rand;
+use rand::Rng;
 use rand::distributions::{IndependentSample, Range};
 
 use rayon::prelude::*;
@@ -26,7 +27,7 @@ impl NQueens {
         }
     }
 
-    /// Creates a new board of size `usize` with each queen's position selected uniformly at random
+    /// Creates a new board of size `size` with each queen's position selected uniformly at random
     pub fn new_random(size: usize) -> NQueens {
         let mut queens = Vec::new();
 
@@ -35,6 +36,20 @@ impl NQueens {
             queens.push(Some(Range::new(0, size).ind_sample(&mut rng)));
         }
 
+        NQueens {
+            queens: queens,
+        }
+    }
+
+    /// Creates a new board of size `size` with one queen per row and column, selected uniformly
+    /// at random from the set of permutations of the set `0..size`
+    pub fn new_random_permutation(size: usize) -> NQueens {
+        let mut queens: Vec<Option<usize>> = (0..size).map(|i| Some(i)).collect();
+
+        let mut rng = rand::thread_rng();
+
+        rng.shuffle(&mut queens);
+        
         NQueens {
             queens: queens,
         }
@@ -661,6 +676,21 @@ mod test {
             assert!(q.unwrap() == b.get(i));
             i += 1;
         }
+    }
+
+    #[test]
+    pub fn test_random_permutation() {
+        let queens = NQueens::new_random_permutation(8);
+
+        let all_rows_distinct = queens.iter().enumerate().all( |(i,q)| {
+            let q = q.unwrap();
+            queens.iter().skip(i+1).all( |q2| {
+                let q2 = q2.unwrap();
+                q != q2
+            })
+        });
+       
+        assert!(all_rows_distinct != false);
     }
 
     #[test]
